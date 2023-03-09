@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include "beeper.h"
+
+Beeper g_Beeper;
 
 namespace PinNumber
 {
@@ -14,19 +17,18 @@ void setup()
 
 void loop()
 {
-	static bool isHigh = false;
-	static uint32_t count = 0;
+	static constexpr float NOTE_C0 = 16.35f;
 
-	digitalWrite(PinNumber::SINGLE_LED, isHigh ? HIGH : LOW);
-	analogWrite(PinNumber::A0, (isHigh && count < 500) ? 255 : 0);
+	static float pitch = NOTE_C0;
 
-	isHigh = !isHigh;
-	++count;
+	g_Beeper.PlayNoteBlocking(pitch, 500);
 
-	if ( count >= 1000 )
+	pitch *= 2;
+
+	if ( pitch > 1400.0f )
 	{
-		count = 0;
+		pitch = NOTE_C0;
 	}
 
-	delay(1);
+	delay(500);
 }
