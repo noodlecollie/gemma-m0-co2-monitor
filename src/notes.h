@@ -21,14 +21,16 @@ namespace Notes
 	LIST_ITEM(ASharp, 29.14f) \
 	LIST_ITEM(B, 30.87f) \
 
-	enum NoteID : int32_t
+	using NoteIDBaseType = uint32_t;
+
+	enum NoteID : NoteIDBaseType
 	{
 #define LIST_ITEM(value, freq) value,
 		NOTE_DEF_LIST
 #undef LIST_ITEM
 
 		NumNotes,
-		NoNote = -1,
+		NoNote,
 
 		// Useful aliases:
 		DFlat = CSharp,
@@ -38,12 +40,22 @@ namespace Notes
 		BFlat = ASharp,
 	};
 
+#pragma pack(push, 1)
+	struct SerialisedNote
+	{
+		uint32_t durationMS;
+		NoteIDBaseType noteID : 4;
+		uint8_t octave : 4;
+	};
+#pragma pack(pop)
+
 	class Note
 	{
 	public:
 		Note();
 		Note(NoteID noteID);
 		Note(NoteID noteID, uint8_t octave);
+		explicit Note(const SerialisedNote& sNote);
 
 		static float NoteToFrequency(NoteID noteID, uint8_t octave);
 		static NoteID PreviousNote(NoteID noteID);

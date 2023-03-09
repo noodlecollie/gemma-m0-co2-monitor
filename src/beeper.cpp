@@ -28,7 +28,7 @@ Beeper::Beeper(uint32_t pinID)
 {
 }
 
-void Beeper::PlayToneBlocking(float freqHz, uint32_t durationMS)
+void Beeper::PlayToneBlocking(float freqHz, uint32_t durationMS) const
 {
 	if ( durationMS < 1 )
 	{
@@ -64,7 +64,7 @@ void Beeper::PlayToneBlocking(float freqHz, uint32_t durationMS)
 	analogWrite(m_PinID, 0);
 }
 
-void Beeper::PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS)
+void Beeper::PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS) const
 {
 	if ( !note.HasFrequency() )
 	{
@@ -74,4 +74,19 @@ void Beeper::PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS)
 	}
 
 	PlayToneBlocking(note.GetFrequency(), durationMS);
+}
+
+void Beeper::PlayNoteSequenceBlocking(const Notes::SerialisedNote* sequence, size_t sequenceLength) const
+{
+	if ( !sequence || sequenceLength < 1 )
+	{
+		return;
+	}
+
+	while ( sequenceLength > 0 )
+	{
+		PlayNoteBlocking(Notes::Note(*sequence), sequence->durationMS);
+		++sequence;
+		--sequenceLength;
+	}
 }

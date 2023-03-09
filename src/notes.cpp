@@ -4,7 +4,7 @@
 
 namespace Notes
 {
-	static const float NOTE_FREQUENCIES[] =
+	static const float NOTE_FREQUENCIES[NoteID::NumNotes] =
 	{
 #define LIST_ITEM(value, freq) freq,
 		NOTE_DEF_LIST
@@ -13,13 +13,17 @@ namespace Notes
 
 	static bool NoteHasFrequency(NoteID note)
 	{
-		return static_cast<int32_t>(note) >= 0 &&
-			static_cast<int32_t>(note) < static_cast<int32_t>(Utils::ArraySize(NOTE_FREQUENCIES));
+		return static_cast<NoteIDBaseType>(note) < static_cast<NoteIDBaseType>(Utils::ArraySize(NOTE_FREQUENCIES));
 	}
 
 	static float GetNoteFrequency(NoteID noteID)
 	{
-		return NoteHasFrequency(noteID) ? NOTE_FREQUENCIES[static_cast<int32_t>(noteID)] : 0.0f;
+		return NoteHasFrequency(noteID) ? NOTE_FREQUENCIES[static_cast<NoteIDBaseType>(noteID)] : 0.0f;
+	}
+
+	static NoteID DeserialiseNoteID(NoteIDBaseType inID)
+	{
+		return inID <= NoteID::NoNote ? static_cast<NoteID>(inID) : NoteID::NoNote;
 	}
 
 	Note::Note()
@@ -37,6 +41,12 @@ namespace Notes
 	{
 	}
 
+	Note::Note(const SerialisedNote& sNote) :
+		m_NoteID(DeserialiseNoteID(sNote.noteID)),
+		m_Octave(std::min<uint8_t>(sNote.octave, MAX_OCTAVE))
+	{
+	}
+
 	float Note::NoteToFrequency(NoteID noteID, uint8_t octave)
 	{
 		if ( !NoteHasFrequency(noteID) )
@@ -51,13 +61,10 @@ namespace Notes
 			octave = MAX_OCTAVE;
 		}
 
-		if ( octave > 0 )
+		while ( octave > 0 )
 		{
-			do
-			{
-				freq *= 2.0f;
-			}
-			while ( --octave > 0 );
+			freq *= 2.0f;
+			--octave;
 		}
 
 		return freq;
@@ -75,7 +82,7 @@ namespace Notes
 			return NoteID::B;
 		}
 
-		return static_cast<NoteID>(static_cast<int32_t>(noteID) - 1);
+		return static_cast<NoteID>(static_cast<NoteIDBaseType>(noteID) - 1);
 	}
 
 	NoteID Note::NextNote(NoteID noteID)
@@ -90,7 +97,7 @@ namespace Notes
 			return NoteID::C;
 		}
 
-		return static_cast<NoteID>(static_cast<int32_t>(noteID) + 1);
+		return static_cast<NoteID>(static_cast<NoteIDBaseType>(noteID) + 1);
 	}
 
 	NoteID Note::GetNoteID() const

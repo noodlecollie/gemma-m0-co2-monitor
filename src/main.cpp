@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "beeper.h"
 #include "notes.h"
+#include "utils.h"
 
 Beeper g_Beeper;
 
@@ -18,10 +19,32 @@ void setup()
 
 void loop()
 {
-	static Notes::NoteID note = Notes::NoteID::C;
+	using namespace Notes;
 
-	g_Beeper.PlayNoteBlocking(note, 500);
+	static const SerialisedNote SEQUENCE[] =
+	{
+		{ 200, NoteID::C, 4 },
+		{ 200, NoteID::D, 4 },
+		{ 200, NoteID::E, 4 },
+		{ 200, NoteID::F, 4 },
+		{ 200, NoteID::G, 4 },
+		{ 200, NoteID::A, 4 },
+		{ 200, NoteID::B, 4 },
+		{ 200, NoteID::C, 5 },
+		{ 1000, NoteID::NoNote, 0 },
+		{ 200, NoteID::C, 5 },
+		{ 200, NoteID::B, 4 },
+		{ 200, NoteID::A, 4 },
+		{ 200, NoteID::G, 4 },
+		{ 200, NoteID::F, 4 },
+		{ 200, NoteID::E, 4 },
+		{ 200, NoteID::D, 4 },
+		{ 200, NoteID::C, 4 },
+	};
 
-	note = Notes::Note::NextNote(note);
-	delay(500);
+	digitalWrite(PinNumber::SINGLE_LED, HIGH);
+	g_Beeper.PlayNoteSequenceBlocking(SEQUENCE, Utils::ArraySize(SEQUENCE));
+	digitalWrite(PinNumber::SINGLE_LED, LOW);
+
+	delay(3000);
 }
