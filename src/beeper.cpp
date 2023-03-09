@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <limits>
 #include "beeper.h"
+#include "notes.h"
 
 static constexpr uint32_t ANALOGUE_WAVE_HIGH = 255;
 static constexpr uint32_t ANALOGUE_WAVE_LOW = 0;
@@ -27,7 +28,7 @@ Beeper::Beeper(uint32_t pinID)
 {
 }
 
-void Beeper::PlayNoteBlocking(float freqHz, uint32_t durationMS)
+void Beeper::PlayToneBlocking(float freqHz, uint32_t durationMS)
 {
 	if ( durationMS < 1 )
 	{
@@ -61,4 +62,16 @@ void Beeper::PlayNoteBlocking(float freqHz, uint32_t durationMS)
 
 	// Always end low.
 	analogWrite(m_PinID, 0);
+}
+
+void Beeper::PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS)
+{
+	if ( !note.HasFrequency() )
+	{
+		// Specified duration of silence
+		delay(durationMS);
+		return;
+	}
+
+	PlayToneBlocking(note.GetFrequency(), durationMS);
 }

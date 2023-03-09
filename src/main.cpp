@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "beeper.h"
+#include "notes.h"
 
 Beeper g_Beeper;
 
@@ -17,18 +18,10 @@ void setup()
 
 void loop()
 {
-	static constexpr float NOTE_C0 = 16.35f;
+	static Notes::NoteID note = Notes::NoteID::C;
 
-	static float pitch = NOTE_C0;
+	g_Beeper.PlayNoteBlocking(note, 500);
 
-	g_Beeper.PlayNoteBlocking(pitch, 500);
-
-	pitch *= 2;
-
-	if ( pitch > 1400.0f )
-	{
-		pitch = NOTE_C0;
-	}
-
+	note = Notes::Note::NextNote(note);
 	delay(500);
 }
