@@ -1,20 +1,36 @@
 #include <Arduino.h>
-#include "beeper.h"
+#include <Wire.h>
 #include "notes.h"
 #include "utils.h"
-
-Beeper g_Beeper;
-
-namespace PinNumber
-{
-	static constexpr uint32_t A0 = 1;
-	static constexpr uint32_t SINGLE_LED = 13;
-}
+#include "gemma_pins.h"
+#include "devices.h"
 
 void setup()
 {
-	pinMode(PinNumber::SINGLE_LED, OUTPUT);
-	pinMode(PinNumber::A0, OUTPUT);
+	pinMode(GemmaPin::SINGLE_LED, OUTPUT);
+	pinMode(GemmaPin::A0, OUTPUT);
+
+	Wire.begin();
+	Serial.begin(9600);
+
+	delay(2000);
+
+	Serial.printf("Performing SCD4X first time init...\n");
+	Devices::Dev_CO2Sensor.SetDebugLoggingEnabled(true);
+	Devices::Dev_CO2Sensor.FirstTimeInit();
+
+	Serial.printf("Getting SCD4X serial number...\n");
+
+	SCD4X::SerialNumber serial {};
+
+	if ( Devices::Dev_CO2Sensor.GetSerialNumber(serial) )
+	{
+		Serial.printf("SCD4X serial number: %u:%u:%u\n", serial.component[0], serial.component[1], serial.component[2]);
+	}
+	else
+	{
+		Serial.printf("Failed to get SCD4X serial number!\n");
+	}
 }
 
 void loop()
@@ -42,9 +58,9 @@ void loop()
 		{ 200, NoteID::C, 4 },
 	};
 
-	digitalWrite(PinNumber::SINGLE_LED, HIGH);
-	g_Beeper.PlayNoteSequenceBlocking(SEQUENCE, Utils::ArraySize(SEQUENCE));
-	digitalWrite(PinNumber::SINGLE_LED, LOW);
+	digitalWrite(GemmaPin::SINGLE_LED, HIGH);
+	Devices::Dev_Beeper.PlayNoteSequenceBlocking(SEQUENCE, Utils::ArraySize(SEQUENCE));
+	digitalWrite(GemmaPin::SINGLE_LED, LOW);
 
 	delay(3000);
 }
