@@ -18,7 +18,7 @@ public:
 	bool DebugLoggingEnabled() const;
 	void SetDebugLoggingEnabled(bool enabled);
 
-	void FirstTimeInit();
+	void Reinitialise();
 	bool GetSerialNumber(SerialNumber& outSerial);
 
 private:

@@ -8,7 +8,7 @@
 
 static bool InitialiseCO2Monitor()
 {
-	Devices::Dev_CO2Sensor.FirstTimeInit();
+	Devices::Dev_CO2Sensor.Reinitialise();
 
 	SCD4X::SerialNumber serial {};
 
@@ -18,9 +18,7 @@ static bool InitialiseCO2Monitor()
 		return false;
 	}
 
-	Serial.printf("SCD4X serial number: %u:%u:%u\n", serial.component[0], serial.component[1], serial.component[2]);
-
-	// TODO: Init with settings from EEPROM
+	Serial.printf("SCD4X serial number: %04x:%04x:%04x\n", serial.component[0], serial.component[1], serial.component[2]);
 	return true;
 }
 
@@ -31,7 +29,6 @@ void setup()
 
 	Wire.begin();
 	Serial.begin(9600);
-	delay(500);
 
 	Devices::Dev_Beeper.PlayNoteSequenceBlocking(NoteSequences::Bootup());
 

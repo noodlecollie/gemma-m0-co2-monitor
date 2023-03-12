@@ -22,18 +22,22 @@ void SCD4X::SetDebugLoggingEnabled(bool enabled)
 	m_ShouldLog = enabled;
 }
 
-void SCD4X::FirstTimeInit()
+void SCD4X::Reinitialise()
 {
-	DEBUG_LOG("SCD4X: FirstTimeInit()\n");
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 5;
+
+	DEBUG_LOG("SCD4X: Reinitialise()\n");
+
 	StopPeriodicMeasurement();
+	SendCommand(Command::REINIT, REFRACTORY_DELAY_MS);
 }
 
 bool SCD4X::GetSerialNumber(SerialNumber& outSerial)
 {
-	static constexpr uint32_t RESPONSE_DELAY_MS = 1;
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 1;
 	static constexpr size_t RESPONSE_SIZE_WORDS = 3;
 
-	SendCommand(Command::SERIALNUMBER, RESPONSE_DELAY_MS);
+	SendCommand(Command::SERIALNUMBER, REFRACTORY_DELAY_MS);
 
 	WordCRC response[RESPONSE_SIZE_WORDS];
 
@@ -51,10 +55,10 @@ bool SCD4X::GetSerialNumber(SerialNumber& outSerial)
 
 void SCD4X::StopPeriodicMeasurement()
 {
-	static constexpr uint32_t RESPONSE_DELAY_MS = 500;
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 500;
 
 	DEBUG_LOG("SCD4X: StopPeriodicMeasurement()\n");
-	SendCommand(Command::STOPPERIODICMEASUREMENT, RESPONSE_DELAY_MS);
+	SendCommand(Command::STOPPERIODICMEASUREMENT, REFRACTORY_DELAY_MS);
 }
 
 void SCD4X::SendCommand(Command cmd, uint32_t delayAfterCmdMS)
