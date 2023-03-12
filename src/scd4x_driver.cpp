@@ -24,7 +24,7 @@ void SCD4X::SetDebugLoggingEnabled(bool enabled)
 
 void SCD4X::Reinitialise()
 {
-	static constexpr uint32_t REFRACTORY_DELAY_MS = 5;
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 20;
 
 	DEBUG_LOG("SCD4X: Reinitialise()\n");
 
@@ -32,10 +32,12 @@ void SCD4X::Reinitialise()
 	SendCommand(Command::REINIT, REFRACTORY_DELAY_MS);
 }
 
-bool SCD4X::GetSerialNumber(SerialNumber& outSerial)
+SCD4X::OperationResult SCD4X::GetSerialNumber(SerialNumber& outSerial)
 {
 	static constexpr uint32_t REFRACTORY_DELAY_MS = 1;
 	static constexpr size_t RESPONSE_SIZE_WORDS = 3;
+
+	DEBUG_LOG("SCD4X: GetSerialNumber()\n");
 
 	SendCommand(Command::SERIALNUMBER, REFRACTORY_DELAY_MS);
 
@@ -43,14 +45,71 @@ bool SCD4X::GetSerialNumber(SerialNumber& outSerial)
 
 	if ( !ReadAndCheckReply(response) )
 	{
-		return false;
+		return OperationResult::FAILURE;
 	}
 
 	outSerial.component[0] = (response[0].Byte1() << 8) | response[0].Byte0();
 	outSerial.component[1] = (response[1].Byte1() << 8) | response[1].Byte0();
 	outSerial.component[2] = (response[2].Byte1() << 8) | response[2].Byte0();
 
-	return true;
+	return OperationResult::SUCCESS;
+}
+
+SCD4X::OperationResult SCD4X::CheckIfDataIsReady(bool& ready)
+{
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 1;
+
+	DEBUG_LOG("SCD4X: CheckIfDataIsReady()\n");
+
+	SendCommand(Command::DATAREADY, REFRACTORY_DELAY_MS);
+
+	WordCRC response {};
+
+	if ( !ReadAndCheckReply(response) )
+	{
+		return OperationResult::FAILURE;
+	}
+
+	const uint16_t responseWord = response.Word();
+
+	DEBUG_LOG("SCD4X: CheckIfDataIsReady() response: 0x%u\n", responseWord);
+	ready = !(((responseWord & 0x0700) == 0) && ((responseWord & 0xFF) == 0));
+
+	return OperationResult::SUCCESS;
+}
+
+SCD4X::OperationResult SCD4X::GetSensorData(SensorData& outData)
+{
+	static constexpr uint32_t REFRACTORY_DELAY_MS = 1;
+	static constexpr size_t RESPONSE_SIZE_WORDS = 3;
+
+	DEBUG_LOG("SCD4X: GetSensorData()\n");
+
+	SendCommand(Command::READMEASUREMENT, REFRACTORY_DELAY_MS);
+
+	WordCRC response[RESPONSE_SIZE_WORDS];
+
+	if ( !ReadAndCheckReply(response) )
+	{
+		return OperationResult::FAILURE;
+	}
+
+	outData.co2 = response[0].Word();
+
+	int32_t temperature = response[1].Word();
+	temperature = ((175 * temperature) / 65536) - 45;
+	outData.temperature = static_cast<int16_t>(temperature);
+
+	uint32_t humidity = response[2].Word();
+	outData.relativeHumidity = static_cast<uint16_t>((100 * humidity) / 65536);
+
+	return OperationResult::SUCCESS;
+}
+
+void SCD4X::StartPeriodicMeasurement()
+{
+	DEBUG_LOG("SCD4X: StartPeriodicMeasurement()\n");
+	SendCommand(Command::STARTPERIODICMEASUREMENT);
 }
 
 void SCD4X::StopPeriodicMeasurement()
