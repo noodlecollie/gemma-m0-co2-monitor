@@ -12,14 +12,9 @@ void setup()
 
 	Wire.begin();
 	Serial.begin(9600);
+	delay(500);
 
-	delay(2000);
-
-	Serial.printf("Performing SCD4X first time init...\n");
-	Devices::Dev_CO2Sensor.SetDebugLoggingEnabled(true);
 	Devices::Dev_CO2Sensor.FirstTimeInit();
-
-	Serial.printf("Getting SCD4X serial number...\n");
 
 	SCD4X::SerialNumber serial {};
 

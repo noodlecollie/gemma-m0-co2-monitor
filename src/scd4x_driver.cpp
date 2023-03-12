@@ -59,12 +59,16 @@ void SCD4X::StopPeriodicMeasurement()
 
 void SCD4X::SendCommand(Command cmd, uint32_t delayAfterCmdMS)
 {
-	const uint16_t toWrite = static_cast<uint16_t>(cmd);
+	const uint8_t toWrite[2] =
+	{
+		static_cast<uint8_t>((static_cast<uint16_t>(cmd) >> 8) & 0xFF),
+		static_cast<uint8_t>(static_cast<uint16_t>(cmd) & 0xFF)
+	};
 
 	DEBUG_LOG("SCD4X: Sending command 0x%04x to 0x%02x\n", toWrite, DEFAULT_I2C_ADDRESS);
 
 	Wire.beginTransmission(DEFAULT_I2C_ADDRESS);
-	Wire.write(reinterpret_cast<const uint8_t*>(&toWrite), sizeof(toWrite));
+	Wire.write(toWrite, sizeof(toWrite));
 	Wire.endTransmission();
 
 	if ( delayAfterCmdMS > 0 )
@@ -84,9 +88,19 @@ bool SCD4X::ReadAndCheckReply(WordCRC* words, size_t numWords)
 
 	for ( size_t index = 0; index < numWords; ++index )
 	{
-		if ( ComputeCRCByte(words[index].Byte0(), words[index].Byte1()) != words[index].CRC() )
+		const uint8_t b0 = words[index].Byte0();
+		const uint8_t b1 = words[index].Byte1();
+		const uint8_t computedCRC = ComputeCRCByte(b0, b1);
+
+		if ( computedCRC != words[index].CRC() )
 		{
-			DEBUG_LOG("SCD4X: ReadAndCheckReply() CRC failed for byte %lu\n", index);
+			DEBUG_LOG(
+				"SCD4X: ReadAndCheckReply() CRC failed for byte %lu (0x%02x != 0x%02x)\n",
+				index,
+				computedCRC,
+				words[index].CRC()
+			);
+
 			return false;
 		}
 	}
@@ -96,7 +110,8 @@ bool SCD4X::ReadAndCheckReply(WordCRC* words, size_t numWords)
 
 bool SCD4X::ReadReply(WordCRC* words, size_t numWords)
 {
-	return ReadReply(reinterpret_cast<uint8_t*>(words), numWords * sizeof(WordCRC)) == numWords;
+	const size_t numBytes = numWords * sizeof(WordCRC);
+	return ReadReply(reinterpret_cast<uint8_t*>(words), numBytes) == numBytes;
 }
 
 size_t SCD4X::ReadReply(uint8_t* buffer, size_t bufferSize)
@@ -116,24 +131,41 @@ size_t SCD4X::ReadReply(uint8_t* buffer, size_t bufferSize)
 	return bytesRead;
 }
 
+// Original Python function:
+//
+// def _crc8(buffer: bytearray) -> int:
+// 	crc = 0xFF
+// 	for byte in buffer:
+// 		crc ^= byte
+// 		for _ in range(8):
+// 			if crc & 0x80:
+// 				crc = (crc << 1) ^ 0x31
+// 			else:
+// 				crc = crc << 1
+// 	return crc & 0xFF  # return the bottom 8 bits
+//
+// My initial reimplementation of this didn't work,
+// so the new implementation follows this format exactly.
 uint8_t SCD4X::ComputeCRCByte(uint8_t b0, uint8_t b1)
 {
-	uint8_t crcByte = 0xFF;
+	uint32_t crc = 0xFF;
 
-	for ( size_t index = 0; index < 2; ++index )
+	for ( size_t byteIndex = 0; byteIndex < 2; ++byteIndex )
 	{
-		crcByte ^= index == 0 ? b0 : b1;
+		crc ^= static_cast<uint32_t>(byteIndex == 0 ? b0 : b1);
 
 		for ( size_t bitIndex = 0; bitIndex < 8; ++bitIndex )
 		{
-			crcByte <<= 1;
-
-			if ( crcByte & 0x80 )
+			if ( crc & 0x80 )
 			{
-				crcByte ^= 0x31;
+				crc = (crc << 1) ^ 0x31;
+			}
+			else
+			{
+				crc = crc << 1;
 			}
 		}
 	}
 
-	return crcByte;
+	return static_cast<uint8_t>(crc);
 }
