@@ -7,6 +7,7 @@
 namespace Notes
 {
 	struct SerialisedNote;
+	struct NoteSequence;
 	class Note;
 }
 
@@ -17,7 +18,7 @@ public:
 
 	void PlayToneBlocking(float freqHz, uint32_t durationMS) const;
 	void PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS) const;
-	void PlayNoteSequenceBlocking(const Notes::SerialisedNote* sequence, size_t sequenceLength) const;
+	void PlayNoteSequenceBlocking(const Notes::NoteSequence& sequence) const;
 
 private:
 	uint32_t m_PinID = GemmaPin::A0;

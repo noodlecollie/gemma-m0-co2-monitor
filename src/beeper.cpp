@@ -76,17 +76,16 @@ void Beeper::PlayNoteBlocking(const Notes::Note& note, uint32_t durationMS) cons
 	PlayToneBlocking(note.GetFrequency(), durationMS);
 }
 
-void Beeper::PlayNoteSequenceBlocking(const Notes::SerialisedNote* sequence, size_t sequenceLength) const
+void Beeper::PlayNoteSequenceBlocking(const Notes::NoteSequence& sequence) const
 {
-	if ( !sequence || sequenceLength < 1 )
+	if ( !sequence.IsValid() )
 	{
 		return;
 	}
 
-	while ( sequenceLength > 0 )
+	for ( size_t index = 0; index < sequence.length; ++index )
 	{
-		PlayNoteBlocking(Notes::Note(*sequence), sequence->durationMS);
-		++sequence;
-		--sequenceLength;
+		const Notes::SerialisedNote* note = &sequence.notes[index];
+		PlayNoteBlocking(Notes::Note(*note), note->durationMS);
 	}
 }

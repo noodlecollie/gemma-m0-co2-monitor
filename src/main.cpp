@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "gemma_pins.h"
 #include "devices.h"
+#include "note_sequences.h"
 
 void setup()
 {
@@ -13,6 +14,8 @@ void setup()
 	Wire.begin();
 	Serial.begin(9600);
 	delay(500);
+
+	Devices::Dev_Beeper.PlayNoteSequenceBlocking(NoteSequences::BootupSequence());
 
 	Devices::Dev_CO2Sensor.FirstTimeInit();
 
@@ -30,32 +33,4 @@ void setup()
 
 void loop()
 {
-	using namespace Notes;
-
-	static const SerialisedNote SEQUENCE[] =
-	{
-		{ 200, NoteID::C, 4 },
-		{ 200, NoteID::D, 4 },
-		{ 200, NoteID::E, 4 },
-		{ 200, NoteID::F, 4 },
-		{ 200, NoteID::G, 4 },
-		{ 200, NoteID::A, 4 },
-		{ 200, NoteID::B, 4 },
-		{ 200, NoteID::C, 5 },
-		{ 1000, NoteID::NoNote, 0 },
-		{ 200, NoteID::C, 5 },
-		{ 200, NoteID::B, 4 },
-		{ 200, NoteID::A, 4 },
-		{ 200, NoteID::G, 4 },
-		{ 200, NoteID::F, 4 },
-		{ 200, NoteID::E, 4 },
-		{ 200, NoteID::D, 4 },
-		{ 200, NoteID::C, 4 },
-	};
-
-	digitalWrite(GemmaPin::SINGLE_LED, HIGH);
-	Devices::Dev_Beeper.PlayNoteSequenceBlocking(SEQUENCE, Utils::ArraySize(SEQUENCE));
-	digitalWrite(GemmaPin::SINGLE_LED, LOW);
-
-	delay(3000);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 namespace Notes
 {
@@ -48,6 +49,24 @@ namespace Notes
 		uint8_t octave : 4;
 	};
 #pragma pack(pop)
+
+	struct NoteSequence
+	{
+		const SerialisedNote* notes;
+		size_t length;
+
+		template<size_t SIZE>
+		NoteSequence(const SerialisedNote (&array)[SIZE]) :
+			notes(array),
+			length(SIZE)
+		{
+		}
+
+		bool IsValid() const
+		{
+			return notes != nullptr && length > 0;
+		}
+	};
 
 	class Note
 	{
