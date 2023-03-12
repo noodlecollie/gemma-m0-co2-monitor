@@ -50,14 +50,14 @@ void loop()
 		{
 			if ( Devices::Dev_CO2Sensor.GetSensorData(sensorData) == SCD4X::OperationResult::SUCCESS )
 			{
-				Devices::Dev_Beeper.PlayNoteBlocking(Notes::Note(Notes::NoteID::C, 7), 20);
-
 				Serial.printf(
 					"CO2: %u Temperature: %d Relative humidity: %u\n",
 					sensorData.co2,
 					sensorData.temperature,
 					sensorData.relativeHumidity
-			);
+				);
+
+				Devices::Dev_Beeper.PlayValueEncoding(sensorData.co2);
 			}
 			else
 			{
